@@ -29,11 +29,16 @@ LABEL org.opencontainers.image.source https://github.com/${ORG_NAME}/dragonfly
 RUN groupadd -r -g 999 dfly && useradd -r -g dfly -u 999 dfly
 RUN mkdir /data && chown dfly:dfly /data
 
+RUN apt-get update && apt-get install -y \
+    libcap2-bin \
+ && rm -rf /var/lib/apt/lists/*
+
 VOLUME /data
 WORKDIR /data
 COPY tools/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --from=builder /build/su-exec /usr/local/bin/
 COPY --from=builder /build/dragonfly /usr/local/bin/
+RUN setcap cap_ipc_lock=+ep /usr/local/bin/dragonfly
 
 ENTRYPOINT ["entrypoint.sh"]
 
